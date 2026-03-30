@@ -1,4 +1,4 @@
-# 🌍 Human-Centric Time (HCT)
+# 🌍 Earth Time (ET)
 
 *A radical proposal to end the "Leap Day" and "Daylight Saving" madness through technology.*
 
@@ -14,7 +14,7 @@ Our current timekeeping system is a relic of the industrial age. We force billio
 
 ---
 
-## 🚀 The Solution: Human-Centric Time
+## 🚀 The Solution: Earth Time
 
 Technology should serve biology. Instead of forcing humans to adapt to a rigid, mechanical clock, we use the computing power in our pockets to make the clock "breathe" with the planet.
 
@@ -29,14 +29,14 @@ Technology should serve biology. Instead of forcing humans to adapt to a rigid, 
 
 ## 🛠️ Technical Implementation (Perl)
 
-The provided script `human_time_final.pl` is a proof-of-concept for this system.
+The provided script `earth_time.pl` is a proof-of-concept for this system.
 
 ### How to Run:
 
 Ensure you have Perl installed (standard on Linux/macOS) and run:
 
 ```bash
-perl human_time_final.pl [your_utc_offset]
+perl earth_time.pl [your_utc_offset]
 ```
 
 For Poland, use `1`. For the UK, use `0`.
@@ -45,7 +45,7 @@ For Poland, use `1`. For the UK, use `0`.
 
 - **Calculates Orbital Lag:** Spreads the "Leap Year" extra time across the calendar.
 - **Applies Sine-Wave Smoothing:** Uses a trigonometric function to ensure the transition between winter and summer is as smooth as nature itself.
-- **Outputs "Human Time":** Displays the time your body wants to live by, rather than the one the government dictates.
+- **Outputs "Earth Time":** Displays the time your body wants to live by, rather than the one the government dictates.
 
 ---
 
