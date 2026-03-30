@@ -1,3 +1,59 @@
+# 🌍 Human-Centric Time (HCT)
+
+*A radical proposal to end the "Leap Day" and "Daylight Saving" madness through technology.*
+
+---
+
+## 💡 The Problem
+
+Our current timekeeping system is a relic of the industrial age. We force billions of people to:
+
+- **Jump 1 hour twice a year** (causing heart attacks, accidents, and sleep deprivation).
+- **Add a "Leap Day" (Feb 29) every four years** because we can't sync our clocks with Earth's orbit.
+- **Ignore the Sun**, leading to children going to school in pitch darkness or returning home after sunset.
+
+---
+
+## 🚀 The Solution: Human-Centric Time
+
+Technology should serve biology. Instead of forcing humans to adapt to a rigid, mechanical clock, we use the computing power in our pockets to make the clock "breathe" with the planet.
+
+### Key Features of this Script:
+
+- **Zero-Jerk Transition:** No more 1-hour jumps. The clock adjusts by roughly 40-60 seconds per day. You will never feel the change.
+- **High-Noon Sync:** At 12:00 PM, the sun is always at its highest point (zenith) in your time zone. Your biological rhythm stays perfectly aligned with natural light.
+- **The "Leap Smear":** We eliminate February 29th. The extra 5 hours and 48 minutes of the orbital year are distributed across all 365 days. Every day is slightly longer, making the 4-year "jump" unnecessary.
+- **The Breathing Second:** To achieve this, the length of a second changes by microscopic amounts (e.g., 1.0004s instead of 1.0000s). Digital devices handle the math; humans just enjoy the sunlight.
+
+---
+
+## 🛠️ Technical Implementation (Perl)
+
+The provided script `human_time_final.pl` is a proof-of-concept for this system.
+
+### How to Run:
+
+Ensure you have Perl installed (standard on Linux/macOS) and run:
+
+```bash
+perl human_time_final.pl [your_utc_offset]
+```
+
+For Poland, use `1`. For the UK, use `0`.
+
+### What the Code Does:
+
+- **Calculates Orbital Lag:** Spreads the "Leap Year" extra time across the calendar.
+- **Applies Sine-Wave Smoothing:** Uses a trigonometric function to ensure the transition between winter and summer is as smooth as nature itself.
+- **Outputs "Human Time":** Displays the time your body wants to live by, rather than the one the government dictates.
+
+---
+
+## 📜 The Manifesto
+
+*"Time was once a natural phenomenon. We turned it into a prison of gears and bits. It is time to use those same bits to set our biological clocks free."*
+
+
 # 📑 TECHNICAL SPECIFICATION: EARTH TIME (ET) SYSTEM (v1.0 Atomic)
 
 **Code Name:** Breathing Clock  
