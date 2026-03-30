@@ -70,3 +70,7 @@ The system should be implemented as a system daemon (`etd`) that:
 
 **System Motto:**  
 *"Technology should not measure time against humanity, but in harmony with its nature."*
+
+## 6. Example implementation
+Attached Perl script shows a local earch time which include all the above parameters.
+Script parameter is a time zone.
