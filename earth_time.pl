@@ -3,23 +3,34 @@ use strict;
 use warnings;
 use POSIX qw(strftime);
 
-# --- CONSTANTS & COSMIC DRIFT ---
+# --- ASTRONOMICAL CONSTANTS ---
 use constant SECONDS_IN_DAY => 86400;
-use constant LEAP_DAY_SECONDS => 86400;
+# Delta T (TT - UT1 difference) increases quadratically: approx 31s / century^2
+use constant TIDAL_COEFF    => 31; 
 
-# Tidal friction causes Earth to slow down. 
-# Average slowing is 1.7ms per 100 years.
-# We calculate the drift from a fixed epoch (e.g., year 2000).
-sub get_tidal_slowing_offset {
-    my ($year) = @_;
-    my $centuries_since_2000 = ($year - 2000) / 100;
-    # Total cumulative offset in seconds due to Earth's rotation slowing
-    return ($centuries_since_2000 * 0.0017); 
-}
+sub get_astronomical_adjustments {
+    my ($yday, $year) = @_;
 
-sub is_gregorian_leap {
-    my ($year) = @_;
-    return ($year % 4 == 0 && ($year % 100 != 0 || $year % 400 == 0));
+    # 1. TIDAL SLOWING (Delta T)
+    # Simplified model for the modern era: ΔT ≈ 31 * t^2
+    # where t is centuries elapsed since 1820 (the zero point for rotation rate)
+    my $t = ($year - 1820) / 100;
+    my $delta_t = TIDAL_COEFF * ($t**2);
+
+    # 2. EQUATION OF TIME (EoT)
+    # Approximation of the difference between Apparent Solar Time and Mean Solar Time.
+    # Factors in Earth's axial tilt and orbital eccentricity.
+    # Result in minutes, converted to seconds.
+    my $b = 2 * 3.14159 * ($yday - 81) / 365;
+    my $eot = 9.87 * sin(2 * $b) - 7.53 * cos($b) - 1.5 * sin($b);
+    my $eot_seconds = $eot * 60;
+
+    # 3. TROPICAL YEAR DRIFT
+    # Difference between Calendar Year (365.25) and Tropical Year (365.2422)
+    # This drift is roughly 0.0078 days per year (~674 seconds)
+    my $orbital_drift = ($year - 2000) * 673.92;
+
+    return ($delta_t, $eot_seconds, $orbital_drift);
 }
 
 sub get_human_time {
@@ -30,50 +41,33 @@ sub get_human_time {
     my $yday = $t[7];
     my $year = $t[5] + 1900;
 
-    # 1. TIDAL SLOWING ADJUSTMENT (The Atomic Factor)
-    # This adjusts our "day" to match the actual, slowing rotation of Earth.
-    my $tidal_offset = get_tidal_slowing_offset($year);
+    my ($delta_t, $eot_sec, $drift) = get_astronomical_adjustments($yday, $year);
 
-    # 2. GREGORIAN & ORBITAL DRIFT
-    my $daily_leap_smear = is_gregorian_leap($year) ? (LEAP_DAY_SECONDS / 365) : 0;
-    my $orbital_drift_per_day = 20926 / 365.2422;
-
-    # 3. SEASONAL SINE-WAVE (Zenith Control)
-    my $spring_eq = 80; 
-    my $autumn_eq = 264;
-    my $seasonal_corr = 0;
-    if ($yday >= $spring_eq && $yday < $autumn_eq) {
-        my $progress = ($yday - $spring_eq) / ($autumn_eq - $spring_eq);
-        $seasonal_corr = sin(($progress * 2 - 1) * 1.5708) * 1800;
-    } else {
-        my $days_cycle = 365 - ($autumn_eq - $spring_eq);
-        my $pos = ($yday < $spring_eq) ? ($yday + (365 - $autumn_eq)) : ($yday - $autumn_eq);
-        $seasonal_corr = sin(($pos / $days_cycle * 2 - 1) * 1.5708) * -1800;
-    }
-
-    # 4. FINAL INTEGRATION
+    # Standard System Time (Unix) + timezone offset
     my $standard_time = $now + ($timezone_offset * 3600);
-    # Adding tidal_offset ensures we stay synced with the literal rotation speed
-    my $total_corr = $seasonal_corr + ($yday * ($daily_leap_smear + $orbital_drift_per_day)) + $tidal_offset;
+    
+    # Final synchronization with the "Solar Clock"
+    # Delta T corrects for rotation slowing, EoT corrects for orbital mechanics
+    my $total_corr = $eot_sec - $delta_t;
     my $human_time = $standard_time + $total_corr;
 
-    # 5. THE BREATHING SECOND (Including tidal lag)
-    my $daily_change = ($daily_leap_smear + $orbital_drift_per_day + ($tidal_offset / 365));
-    my $sec_len = 1 + ($daily_change / SECONDS_IN_DAY);
+    # Calculate dynamic second length for the current era
+    # Derived from the cumulative Delta T shift
+    my $sec_len = 1 + ($delta_t / (SECONDS_IN_DAY * 365 * 100));
 
-    return ($human_time, $total_corr, $sec_len, $standard_time, $year, $tidal_offset);
+    return ($human_time, $total_corr, $sec_len, $year, $delta_t, $eot_sec);
 }
 
 # --- OUTPUT ---
-my $tz = shift || 1; 
-my ($h_time, $total_c, $s_len, $s_time, $yr, $t_off) = get_human_time($tz);
+my $tz = shift || 0; # Defaults to UTC
+my ($h_time, $total_c, $s_len, $yr, $dt, $eot) = get_human_time($tz);
 
-print "--- EARTH TIME: ATOMIC EDITION ---\n";
+print "--- EARTH TIME: REALIGNMENT EDITION ---\n";
 print "Current Year:        $yr\n";
-print "Earth Rotation Lag:  +" . sprintf("%.6f", $t_off) . " s (Tidal Friction)\n";
+print "Delta T (Accumulated): " . sprintf("%.2f s", $dt) . "\n";
+print "Equation of Time:    " . sprintf("%.2f s", $eot) . "\n";
 print "Current Second Len:  " . sprintf("%.10f s", $s_len) . "\n";
-print "Total Sync Offset:   " . sprintf("%.2f min", $total_c/60) . "\n";
 print "------------------------------------------\n";
-print "EARTH TIME:          " . strftime("%H:%M:%S", gmtime($h_time)) . "\n";
+print "SYSTEM TIME (UTC):   " . strftime("%H:%M:%S", gmtime(time())) . "\n";
+print "EARTH TIME (Actual): " . strftime("%H:%M:%S", gmtime($h_time)) . "\n";
 print "------------------------------------------\n";
-print "Status: Atomic drift incorporated. Clock is breathing with Earth.\n";
