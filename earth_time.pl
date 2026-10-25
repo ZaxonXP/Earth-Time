@@ -31,7 +31,7 @@ GetOptions(
     'amp=f'  => \$amp,
     'time=f' => \$now_opt,
     'help|h' => \$help,
-) or die "Błędne opcje. Użyj --help.\n";
+) or die "Invalid options. Use --help.\n";
 
 if ($help) {
     open(my $fh, '<:encoding(UTF-8)', $0) or exit;
@@ -50,10 +50,10 @@ sub parse_tz {
         return $1 eq '-' ? -$v : $v;
     }
     return $s + 0 if $s =~ /^[+-]?\d+(?:\.\d+)?$/;
-    die "Nie rozumiem strefy '$orig'. Przykłady: UTC+1, -5, UTC+5:30\n";
+    die "Cannot parse time zone '$orig'. Examples: UTC+1, -5, UTC+5:30\n";
 }
 my $tz  = parse_tz($tz_str);
-die "Strefa poza zakresem (-12…+14)\n" if $tz < -12 || $tz > 14;
+die "Time zone out of range (-12 to +14)\n" if $tz < -12 || $tz > 14;
 my $now = defined $now_opt ? $now_opt : time();
 
 # ------------------------------------------------------------ astronomy
@@ -140,37 +140,37 @@ sub tz_label {
 }
 
 # ------------------------------------------------------------------ output
-print "=== EARTH TIME (czas ziemski) ===\n";
-printf "Strefa:                %s (południk %.1f°)\n", tz_label($tz), 15 * $tz;
-printf "Data (czas ziemski):   %s\n", strftime("%Y-%m-%d", gmtime(floor($zone_clock)));
+print "=== EARTH TIME ===\n";
+printf "Time zone:             %s (meridian %.1f°)\n", tz_label($tz), 15 * $tz;
+printf "Date (Earth Time):     %s\n", strftime("%Y-%m-%d", gmtime(floor($zone_clock)));
 print  "----------------------------------------------------\n";
 printf "UTC:                   %s\n", hms($now);
-printf "Zegar systemowy (DST): %s\n", strftime("%H:%M:%S", localtime($now));
-printf "CZAS ZIEMSKI:          %s   (płynne DST: %+.1f min)\n", hms($zone_clock), $dst / 60;
+printf "System clock (DST):    %s\n", strftime("%H:%M:%S", localtime($now));
+printf "EARTH TIME:            %s   (smooth DST: %+.1f min)\n", hms($zone_clock), $dst / 60;
 print  "----------------------------------------------------\n";
-printf "Równanie czasu:        %+.2f min (%+.1f s)\n", $eot / 60, $eot;
-printf "Zmiana EoT / DST:      %+.2f / %+.2f s/dobę\n", $d_eot_day, $d_dst_day;
-printf "Długość sekundy ziem.: %.10f s SI  (%+.1f ppm)\n", $sec_len, ($sec_len - 1) * 1e6;
-printf "Doba słoneczna:        %.3f s SI\n", 86400 * $sec_len;
-printf "ΔT (informacyjnie):    %.1f s, rośnie %.2f s/rok\n", $dT, $dT_rate;
+printf "Equation of time:      %+.2f min (%+.1f s)\n", $eot / 60, $eot;
+printf "EoT / DST change:     %+.2f / %+.2f s/day\n", $d_eot_day, $d_dst_day;
+printf "Earth second length:   %.10f SI s  (%+.1f ppm)\n", $sec_len, ($sec_len - 1) * 1e6;
+printf "Solar day:             %.3f SI s\n", 86400 * $sec_len;
+printf "Delta T (info only):   %.1f s, growing %.2f s/year\n", $dT, $dT_rate;
 print  "----------------------------------------------------\n";
-printf "Południe słoneczne:    %s (na południku strefy)\n", hms($noon_zone);
-printf "Deklinacja Słońca:     %+.2f°\n", $decl;
+printf "Solar noon:            %s (on the zone meridian)\n", hms($noon_zone);
+printf "Solar declination:     %+.2f°\n", $decl;
 
 if (defined $lat) {
     my $cos_h = (cos(deg2rad(90.833)) - sin(deg2rad($lat)) * sin(deg2rad($decl)))
               / (cos(deg2rad($lat))   * cos(deg2rad($decl)));
-    my $polar = $cos_h > 1 ? 'noc polarna' : $cos_h < -1 ? 'dzień polarny' : '';
+    my $polar = $cos_h > 1 ? 'polar night' : $cos_h < -1 ? 'polar day' : '';
     $cos_h = 1 if $cos_h > 1;
     $cos_h = -1 if $cos_h < -1;
     my $half = rad2deg(acos($cos_h)) / 15 * 3600;
     my $alt  = 90 - abs($lat - $decl);
     if ($polar) {
-        print "Wschód / zachód:       $polar\n";
+        print "Sunrise / sunset:      $polar\n";
     } else {
-        printf "Wschód Słońca:         %s\n", hms($noon_zone - $half);
-        printf "Zachód Słońca:         %s\n", hms($noon_zone + $half);
+        printf "Sunrise:               %s\n", hms($noon_zone - $half);
+        printf "Sunset:                %s\n", hms($noon_zone + $half);
     }
-    printf "Długość dnia:          %.2f h\n", $half * 2 / 3600;
-    printf "Wysokość w południe:   %.1f°%s\n", $alt, ($alt > 89.95 ? ' (Słońce w zenicie)' : '');
+    printf "Day length:            %.2f h\n", $half * 2 / 3600;
+    printf "Noon altitude:         %.1f°%s\n", $alt, ($alt > 89.95 ? ' (Sun at zenith)' : '');
 }
